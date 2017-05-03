@@ -142,21 +142,28 @@ public class MainActivity extends AppCompatActivity {
         String card = editText2.getText().toString();
         String cvv = editText3.getText().toString();
         String yymm = editText4.getText().toString();
+        String referenceNo = "12345678";
+        String amt = "10000";
 
-//        String ="asdf";
+        String merchantToken =iMid+referenceNo+amt+encodeKey;
         MessageDigest digest=null;
         String hash;
-//        try {
-//            digest = MessageDigest.getInstance("SHA-256");
-//            digest.update(password.getBytes());
-//
-//            hash = bytesToHexString(digest.digest());
-//
-//            Log.i("Eamorr", "result is " + hash);
-//        } catch (NoSuchAlgorithmException e1) {
-//            // TODO Auto-generated catch block
-//            e1.printStackTrace();
-//        }
+        hash = null;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+            digest.update(merchantToken.getBytes());
+
+            hash = bytesToHexString(digest.digest());
+
+            Log.i("Eamorr", "result is " + hash);
+        } catch (NoSuchAlgorithmException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+
+//        String sementara = "?jsonData={\"iMid\":\""+iMid+"\",\"referenceNo\":\""+referenceNo+"\",\"amt\":\""+amt+"\",\"cardNo\":\""+card+"\",\"cardExpYymm\":\""+yymm+"\",\"merchantToken\":\""+hash+"}";
+
+//        Log.d("Sementara", sementara);
 
 
 //        String merchantToken = sha256();
@@ -171,10 +178,10 @@ public class MainActivity extends AppCompatActivity {
         jsonParams.put("referenceNo","20170429092009");
         jsonParams.put("iMID", iMid);
 
-        StringRequest URL = new StringRequest(Request.Method.GET, url + "?jsonData={\"iMid\":\"BMRITEST01\",\"referenceNo\":\"20170502091533\",\"amt\":\"10000\",\"cardNo\":\"5409120030212205\",\"cardExpYymm\":\"2010\",\"merchantToken\":\"6ffb993e47f3d342da60c23fa341da4499cf11ceb824f72050e9d33607447e07\"}", new Response.Listener<String>() {
+        StringRequest URL = new StringRequest(Request.Method.GET, url + "?jsonData={\"iMid\":\""+iMid+"\",\"referenceNo\":\""+referenceNo+"\",\"amt\":\""+amt+"\",\"cardNo\":\""+card+"\",\"cardExpYymm\":\""+yymm+"\",\"merchantToken\":\""+hash+"\"}", new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                Log.d("AAAAAAAAAAAAAAA", "hhhhhfftfyt");
+                Log.d("URL", url);
 //
                 Toast.makeText(MainActivity.this, response,Toast.LENGTH_LONG).show();
 
@@ -195,7 +202,6 @@ public class MainActivity extends AppCompatActivity {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.d("error", error.getMessage());
 
             }
         });
@@ -215,7 +221,8 @@ public class MainActivity extends AppCompatActivity {
         sembarang.setJavaScriptEnabled(true);
         sembarang.setAllowFileAccess(true);
         sembarang.setAppCacheEnabled(true);
-        bayar.loadUrl("https://www.nicepay.co.id/nicepay/api/secureVeRequest.do?country=360&callbackUrl=http://192.168.1.94/nicepay/PHP_Nicepay_Direct/3dsecure.php&onePassToken="+token);
+        bayar.loadUrl("https://www.nicepay.co.id/nicepay/api/secureVeRequest.do?country=360&callbackUrl=http://192.168.1.89/nicepay/PHP_Nicepay_Direct/3dsecure.php&onePassToken="+token);
+//        bayar.loadUrl("facebook.com");
 
 
         dialog.show();
