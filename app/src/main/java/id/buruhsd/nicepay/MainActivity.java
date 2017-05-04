@@ -1,6 +1,8 @@
 package id.buruhsd.nicepay;
 
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -10,6 +12,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.webkit.WebBackForwardList;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -42,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String iMid = "BMRITEST01";
     public static final String encodeKey = "33F49GnCMS1mFYlGXisbUDzVf2ATWCl9k3R++d5hDd3Frmuos/XLx8XhXpe+LDYAbpGKZYSwtlyyLOtS/8aD7A==";
     public static String url = "https://www.nicepay.co.id/nicepay/api/onePassToken.do";
-    public static String charge = "http://localhost/nicepay/PHP_Nicepay_Direct/charge.php";
+    public static String charge = "http://192.168.1.89/nicepay/PHP_Nicepay_Direct/charge.php";
     EditText editText, editText2, editText3, editText4;
     Button button2;
     AlertDialog.Builder dialog;
@@ -222,20 +225,25 @@ public class MainActivity extends AppCompatActivity {
         Log.d("One Pass TOken", cardToken);
 //        dialog.setIcon(R.mipmap.ic_launcher);
         dialog.setTitle("BAYAR");
-        dialog.setPositiveButton(button,new DialogInterface.OnClickListener(){
+
+        dialog.setPositiveButton("save",new DialogInterface.OnClickListener(){
             @Override
             public void onClick(DialogInterface dialog, int which){
                 sendCharge(cardToken);
-
-            }
-
-        });
-        dialog.setNegativeButton(button, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
             }
+
         });
+
+        dialog.setNegativeButton("Cancel",new DialogInterface.OnClickListener(){
+            @Override
+            public void onClick(DialogInterface dialog, int which){
+
+                dialog.dismiss();
+
+            }
+        });
+
         bayar = (WebView) dialogView.findViewById(R.id.secure);
         WebSettings sembarang = bayar.getSettings();
         sembarang.setJavaScriptEnabled(true);
@@ -243,53 +251,124 @@ public class MainActivity extends AppCompatActivity {
         sembarang.setAppCacheEnabled(true);
         sembarang.setLoadWithOverviewMode(true);
         sembarang.setJavaScriptCanOpenWindowsAutomatically(true);
-        bayar.setWebViewClient(new WebViewClient());
-        String geturl = bayar.getUrl();
+        bayar.getUrl();
+        bayar.setWebViewClient(new GeoWebViewClient());
+        bayar.setWebViewClient(new NoErrorWebViewClient());
+
+//        WebBackForwardList mWebBackForwardList = bayar.copyBackForwardList();
+//        String historyUrl = mWebBackForwardList.getItemAtIndex(mWebBackForwardList.getCurrentIndex()-1).getUrl();
+
         bayar.loadUrl("https://www.nicepay.co.id/nicepay/api/secureVeRequest.do?country=360&callbackUrl=http://192.168.1.89/nicepay/PHP_Nicepay_Direct/3dsecure.php&onePassToken="+cardToken);
 //        bayar.loadUrl("facebook.com");
-
+//        String geturl = bayar.getUrl();
+//        if (geturl == "http://192.168.1.89/nicepay/PHP_Nicepay_Direct/3dsecure.php?resultCd=0000&resultMsg=SUCCESS&referenceNo=12345678"){
+//            sendCharge();
+//        }
+//        String geturl = bayar.getOriginalUrl().toString();
+//        Log.d("History", geturl);
 
         dialog.show();
+
     }
 
     public void sendCharge(String cardToken){
-        String name = editText.getText().toString();
-        String card = editText2.getText().toString();
-        String cvv = editText3.getText().toString();
-        String yymm = editText4.getText().toString();
-        String referenceNo = "12345678";
-        String amt = "10000";
+        final String name = editText.getText().toString();
+        final String card = editText2.getText().toString();
+        final String cvv = editText3.getText().toString();
+        final String yymm = editText4.getText().toString();
+        final String referenceNo = "12345678";
+        final String amt = "10000";
+        final String onepass = cardToken;
 
         RequestQueue queue = Volley.newRequestQueue(this);
+        Log.d("charge", charge);
 //
-        Map<String, String> jsonParams = new HashMap<String, String>();
-        jsonParams.put("billingNm", name);
-        jsonParams.put("cardExpYymm",yymm);
-        jsonParams.put("cardNo",card);
-        jsonParams.put("cardCvv", cvv);
-        jsonParams.put("payMethod", "01");
-        jsonParams.put("amt", amt);
-        jsonParams.put("resultMsg", "");
-        jsonParams.put("resultCd", "");
-        jsonParams.put("onePassToken", cardToken);
-        jsonParams.put("referenceNo","12345678");
 
-        StringRequest URL = new StringRequest(Request.Method.POST, charge +jsonParams, new Response.Listener<String>() {
+
+        StringRequest URL = new StringRequest(Request.Method.POST, charge, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                Log.d("URL", response);
+
+                Log.d("data", response);
+                Log.d("manga", "naruto");
 //
                 Toast.makeText(MainActivity.this, response,Toast.LENGTH_LONG).show();
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-
+                Log.e("error gan", error.getMessage());
             }
-        });
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+
+                Map<String, String> jsonParams = new HashMap<String, String>();
+                jsonParams.put("billingNm", name);
+                jsonParams.put("cardExpYymm",yymm);
+                jsonParams.put("cardNo",card);
+                jsonParams.put("cardCvv", cvv);
+                jsonParams.put("payMethod", "01");
+                jsonParams.put("amt", amt);
+                jsonParams.put("resultMsg", "");
+                jsonParams.put("resultCd", "");
+                jsonParams.put("onePassToken", onepass);
+                jsonParams.put("referenceNo","12345678");
+
+                return jsonParams;
+            }
+
+        };
         RequestHandler.getInstance(this).addToRequestQueue(URL);
 
 
+    }
+
+    public class GeoWebViewClient extends WebViewClient {
+        String aaa = "https://facebook.com";
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            // TODO Auto-generated method stub
+
+             Log.d("URL => ", aaa);    // current URL
+            view.loadUrl(aaa);
+            return true;
+        }
+
+
+
+    }
+
+    public class NoErrorWebViewClient extends WebViewClient {
+        @Override
+        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+            //  Log.e(String.valueOf(errorCode), description);
+
+            // API level 5: WebViewClient.ERROR_HOST_LOOKUP
+            //jika terjadi eror di webview
+            //   if (errorCode == -2) {
+            String summary = "<html><body style='background: black;'><p style='color: red;'>Silahkan cek koneksi internet anda.</p></body></html>";       view.loadData(summary, "text/html", null);
+            AlertDialog.Builder errorDialog = new AlertDialog.Builder(MainActivity.this);
+            errorDialog.setTitle("Koneksi Error");
+            errorDialog.setMessage("Silahkan cek koneksi internet anda");
+            errorDialog.setNeutralButton("keluar",
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                            Intent exit = new Intent(Intent.ACTION_MAIN);
+                            exit.addCategory(Intent.CATEGORY_HOME);
+                            exit.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            MainActivity.this.finish();
+                            startActivity(exit);
+                        }
+                    });
+            AlertDialog errorAlert = errorDialog.create();
+            errorAlert.show();
+            return;
+            // }
+
+            // Default behaviour
+        }
     }
 
 }
